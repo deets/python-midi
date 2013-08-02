@@ -1,8 +1,7 @@
-import pdb
 class EventRegistry(object):
     Events = {}
     MetaEvents = {}
-    
+
     def register_event(cls, event, bases):
         if MetaEvent in bases:
             assert event.metacommand not in cls.MetaEvents, \
@@ -13,7 +12,7 @@ class EventRegistry(object):
                             "Event %s already registered" % event.name
             cls.Events[event.statusmsg] = event
         else:
-            raise ValueError, "Unknown bases class in event type: "+event.name
+            raise ValueError("Unknown bases class in event type: "+event.name)
     register_event = classmethod(register_event)
 
 
@@ -22,16 +21,17 @@ EventMIDI : Concrete class used to describe MIDI Events.
 Inherits from Event.
 """
 
-class AbstractEvent(object):
-    __slots__ = ['tick', 'data']
+class EventMetaClass(type):
+    def __init__(cls, name, bases, dict):
+        if name not in ['AbstractEvent', 'Event', 'MetaEvent', 'NoteEvent']:
+            EventRegistry.register_event(cls, bases)
+
+class AbstractEvent(metaclass=EventMetaClass):
     name = "Generic MIDI Event"
     length = 0
     statusmsg = 0x0
 
-    class __metaclass__(type):
-        def __init__(cls, name, bases, dict):
-            if name not in ['AbstractEvent', 'Event', 'MetaEvent', 'NoteEvent']:
-                EventRegistry.register_event(cls, bases)
+
 
     def __init__(self, **kw):
         if type(self.length) == int:
@@ -66,9 +66,8 @@ MetaEvent is a special subclass of Event that is not meant to
 be used as a concrete class.  It defines a subset of Events known
 as the Meta  events.
 """
-    
+
 class Event(AbstractEvent):
-    __slots__ = ['channel']
     name = 'Event'
 
     def __init__(self, **kw):
@@ -81,7 +80,7 @@ class Event(AbstractEvent):
     def copy(self, **kw):
         _kw = {'channel': self.channel, 'tick': self.tick, 'data': self.data}
         _kw.update(kw)
-        return self.__class__(**_kw) 
+        return self.__class__(**_kw)
 
     def __cmp__(self, other):
         if self.tick < other.tick: return -1
@@ -104,7 +103,7 @@ MetaEvent is a special subclass of Event that is not meant to
 be used as a concrete class.  It defines a subset of Events known
 as the Meta  events.
 """
-    
+
 class MetaEvent(AbstractEvent):
     statusmsg = 0xFF
     metacommand = 0x0
@@ -122,7 +121,6 @@ and NoteOff events.
 """
 
 class NoteEvent(Event):
-    __slots__ = ['pitch', 'velocity']
     length = 2
 
     def get_pitch(self):
@@ -151,7 +149,6 @@ class AfterTouchEvent(Event):
     name = 'After Touch'
 
 class ControlChangeEvent(Event):
-    __slots__ = ['control', 'value']
     statusmsg = 0xB0
     length = 2
     name = 'Control Change'
@@ -167,9 +164,8 @@ class ControlChangeEvent(Event):
     def get_value(self):
         return self.data[1]
     value = property(get_value, set_value)
-    
+
 class ProgramChangeEvent(Event):
-    __slots__ = ['value']
     statusmsg = 0xC0
     length = 1
     name = 'Program Change'
@@ -181,7 +177,6 @@ class ProgramChangeEvent(Event):
     value = property(get_value, set_value)
 
 class ChannelAfterTouchEvent(Event):
-    __slots__ = ['value']
     statusmsg = 0xD0
     length = 1
     name = 'Channel After Touch'
@@ -193,7 +188,6 @@ class ChannelAfterTouchEvent(Event):
     value = property(get_value, set_value)
 
 class PitchWheelEvent(Event):
-    __slots__ = ['pitch']
     statusmsg = 0xE0
     length = 2
     name = 'Pitch Wheel'
@@ -277,7 +271,6 @@ class EndOfTrackEvent(MetaEvent):
     metacommand = 0x2F
 
 class SetTempoEvent(MetaEvent):
-    __slots__ = ['bpm', 'mpqn']
     name = 'Set Tempo'
     metacommand = 0x51
     length = 3
@@ -301,7 +294,6 @@ class SmpteOffsetEvent(MetaEvent):
     metacommand = 0x54
 
 class TimeSignatureEvent(MetaEvent):
-    __slots__ = ['numerator', 'denominator', 'metronome', 'thirtyseconds']
     name = 'Time Signature'
     metacommand = 0x58
     length = 4
