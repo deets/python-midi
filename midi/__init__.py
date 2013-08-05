@@ -5,4 +5,5 @@ from .events import *
 from .util import *
 from .fileio import (
     FileReader,
+    FileWriter,
     )

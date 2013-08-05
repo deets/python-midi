@@ -114,6 +114,16 @@ class MetaEvent(AbstractEvent):
     is_event = classmethod(is_event)
 
 
+class dataproperty():
+
+    def __init__(self, offset):
+        self.offset = offset
+
+
+    def __get__(self, instance, type=None):
+        return instance.data[self.offset]
+
+
 """
 NoteEvent is a special subclass of Event that is not meant to
 be used as a concrete class.  It defines the generalities of NoteOn
@@ -123,17 +133,9 @@ and NoteOff events.
 class NoteEvent(Event):
     length = 2
 
-    def get_pitch(self):
-        return self.data[0]
-    def set_pitch(self, val):
-        self.data[0] = val
-    pitch = property(get_pitch, set_pitch)
+    pitch = dataproperty(0)
+    velocity = dataproperty(1)
 
-    def get_velocity(self):
-        return self.data[1]
-    def set_velocity(self, val):
-        self.data[1] = val
-    velocity = property(get_velocity, set_velocity)
 
 class NoteOnEvent(NoteEvent):
     statusmsg = 0x90
