@@ -6,4 +6,6 @@ from .util import *
 from .fileio import (
     FileReader,
     FileWriter,
+    write_midifile,
+    read_midifile,
     )
