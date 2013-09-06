@@ -26,6 +26,7 @@ class EventMetaClass(type):
         if name not in ['AbstractEvent', 'Event', 'MetaEvent', 'NoteEvent']:
             EventRegistry.register_event(cls, bases)
 
+
 class AbstractEvent(metaclass=EventMetaClass):
     name = "Generic MIDI Event"
     length = 0
@@ -277,19 +278,27 @@ class SetTempoEvent(MetaEvent):
     metacommand = 0x51
     length = 3
 
+
+    @property
+    def bpm(self):
+        return float(6e7) / self.mpqn
+
+    @bpm.setter
     def set_bpm(self, bpm):
         self.mpqn = int(float(6e7) / bpm)
-    def get_bpm(self):
-        return float(6e7) / self.mpqn
-    bpm = property(get_bpm, set_bpm)
 
-    def get_mpqn(self):
+
+    @property
+    def mpqn(self):
         assert(len(self.data) == 3)
-        vals = [self.data[x] << (16 - (8 * x)) for x in xrange(3)]
+        vals = [self.data[x] << (16 - (8 * x)) for x in range(3)]
         return sum(vals)
-    def set_mpqn(self, val):
+
+    @mpqn.setter
+    def mpqn(self, val):
         self.data = [(val >> (16 - (8 * x)) & 0xFF) for x in range(3)]
-    mpqn = property(get_mpqn, set_mpqn)
+
+
 
 class SmpteOffsetEvent(MetaEvent):
     name = 'SMPTE Offset'
@@ -300,29 +309,41 @@ class TimeSignatureEvent(MetaEvent):
     metacommand = 0x58
     length = 4
 
-    def get_numerator(self):
+    @property
+    def numerator(self):
         return self.data[0]
+
+    @numerator.setter
     def set_numerator(self, val):
         self.data[0] = val
-    numerator = property(get_numerator, set_numerator)
 
-    def get_denominator(self):
+
+    @property
+    def denominator(self):
         return 2 ** self.data[1]
-    def set_denominator(self, val):
+
+    @denominator.setter
+    def denominator(self, val):
         self.data[1] = int(math.sqrt(val))
-    denominator = property(get_denominator, set_denominator)
 
-    def get_metronome(self):
+
+    @property
+    def metronome(self):
         return self.data[2]
-    def set_metronome(self, val):
-        self.data[2] = val
-    metronome = property(get_metronome, set_metronome)
 
-    def get_thirtyseconds(self):
+    @metronome.setter
+    def metronome(self, val):
+        self.data[2] = val
+
+
+    @property
+    def thirtyseconds(self):
         return self.data[3]
-    def set_thirtyseconds(self, val):
+
+    @thirtyseconds.setter
+    def thirtyseconds(self, val):
         self.data[3] = val
-    thirtyseconds = property(get_thirtyseconds, set_thirtyseconds)
+
 
 class KeySignatureEvent(MetaEvent):
     name = 'Key Signature'
